@@ -40,7 +40,7 @@ public class MapView extends JComponent {
     public MapView(){
         //read map image
         try {
-            mapImageFile= ImageIO.read(new File("map.png"));
+            mapImageFile= ImageIO.read(new File("res/map.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -99,6 +99,7 @@ public class MapView extends JComponent {
         //response to wheel event
         this.addMouseWheelListener(mouseAdapter);
         this.addMouseMotionListener(mouseAdapter);
+        this.setBorder(BorderFactory.createLoweredBevelBorder());
     }
 
     /**
