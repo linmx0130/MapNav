@@ -5,6 +5,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
+import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -46,12 +48,11 @@ public class MapView extends JComponent {
         setMinimumSize(new Dimension(600,400));
         clickedListeners=new ArrayList<>();
 
-        //response to click events
-        this.addMouseListener(new MouseAdapter() {
+        MouseAdapter mouseAdapter=new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
-                if (e.getButton()==MouseEvent.BUTTON1){
+                if (e.getButton()==MouseEvent.BUTTON1 && e.getClickCount()==2 ){
                     int x=e.getX();
                     int y=e.getY();
                     double xPosRate=(double)x/getWidth();
@@ -63,7 +64,41 @@ public class MapView extends JComponent {
                     }
                 }
             }
-        });
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                super.mouseWheelMoved(e);
+                double change=e.getWheelRotation()*0.05;
+                setScale(getScale()+change);
+            }
+
+            private Point lastDraggedPoint;
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                super.mouseReleased(e);
+                lastDraggedPoint=null;
+            }
+
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                super.mouseDragged(e);
+                if (lastDraggedPoint==null) {
+                    lastDraggedPoint=new Point(e.getX(),e.getY());
+                }else{
+                    double deltaX=(e.getX()-lastDraggedPoint.getX())*scale/halfWidth;
+                    double deltaY=(e.getY()-lastDraggedPoint.getY())*scale/halfHeight;
+                    lastDraggedPoint=new Point(e.getX(),e.getY());
+                    setCenterX(getCenterX()-deltaX);
+                    setCenterY(getCenterY()-deltaY);
+
+                }
+
+            }
+        };
+        //response to click events
+        this.addMouseListener(mouseAdapter);
+        //response to wheel event
+        this.addMouseWheelListener(mouseAdapter);
+        this.addMouseMotionListener(mouseAdapter);
     }
 
     /**
