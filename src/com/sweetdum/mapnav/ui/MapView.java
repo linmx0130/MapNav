@@ -1,5 +1,8 @@
 package com.sweetdum.mapnav.ui;
 
+import javafx.scene.shape.StrokeLineCap;
+import javafx.scene.shape.StrokeType;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
@@ -8,6 +11,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,6 +21,7 @@ import java.util.ArrayList;
  */
 public class MapView extends JComponent {
     private BufferedImage mapImageFile;
+    private BufferedImage sourceMark,targetMark;
     private double scale=1;
     private double centerX=0,centerY=0;
     private ArrayList<MapClickedListener> clickedListeners;
@@ -24,6 +29,7 @@ public class MapView extends JComponent {
     private int centerPixelX,centerPixelY,halfWidth,halfHeight;
     private int startPixelX,startPixelY,endPixelX,endPixelY;
 
+    private Point sourcePoint,targetPoint;
     /**
      * rebuild all parameters to present the image
      */
@@ -41,13 +47,15 @@ public class MapView extends JComponent {
         //read map image
         try {
             mapImageFile= ImageIO.read(new File("res/map.png"));
+            sourceMark= ImageIO.read(new File("res/sourceMark.png"));
+            targetMark= ImageIO.read(new File("res/targetMark.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }
         buildShowFrame();
         setMinimumSize(new Dimension(600,400));
         clickedListeners=new ArrayList<>();
-
+        sourcePoint=null;
         MouseAdapter mouseAdapter=new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -143,11 +151,39 @@ public class MapView extends JComponent {
         repaint();
     }
 
+    public void setSourcePoint(Point sourcePoint) {
+        this.sourcePoint = sourcePoint;
+        repaint();
+    }
+
+    public void setTargetPoint(Point targetPoint) {
+        this.targetPoint = targetPoint;
+        repaint();
+    }
+
     @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
+    protected void paintComponent(Graphics graphics) {
+        super.paintComponent(graphics);
+        Graphics2D g=(Graphics2D)graphics;
         g.drawImage(mapImageFile,0,0,getWidth(),getHeight(),
                 startPixelX,startPixelY,endPixelX,endPixelY,null);
+        if (sourcePoint!=null) {
+            double realSourcePointX=(sourcePoint.getX()-startPixelX)/mapImageFile.getWidth()*getWidth()/scale;
+            double realSourcePointY=(sourcePoint.getY()-startPixelY)/mapImageFile.getHeight()*getHeight()/scale;
+
+            g.setColor(Color.GREEN);
+            g.setBackground(Color.GREEN);
+            g.drawImage(sourceMark,(int)(realSourcePointX-10),(int)(realSourcePointY-10),20,20,null);
+        }
+        if (targetPoint!=null) {
+            double realSourcePointX=(targetPoint.getX()-startPixelX)/mapImageFile.getWidth()*getWidth()/scale;
+            double realSourcePointY=(targetPoint.getY()-startPixelY)/mapImageFile.getHeight()*getHeight()/scale;
+
+            g.setColor(Color.GREEN);
+            g.setBackground(Color.GREEN);
+            g.drawImage(targetMark,(int)(realSourcePointX-10),(int)(realSourcePointY-10),20,20,null);
+        }
+        //g.setStroke(new BasicStroke(6));
     }
 
     public double getScale() {

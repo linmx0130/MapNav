@@ -72,6 +72,10 @@ public class MapData {
         return tagPositions;
     }
 
+    public RoadGraph getGraph() {
+        return graph;
+    }
+
     public MapData(){
         graph=new RoadGraph();
         readTagPositionsData();

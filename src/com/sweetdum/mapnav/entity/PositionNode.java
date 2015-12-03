@@ -14,7 +14,15 @@ public class PositionNode {
         edges=new ArrayList<>();
     }
 
+    public ArrayList<RoadEdge> getEdges() {
+        return edges;
+    }
+
     public void addEdge(RoadEdge e){
         edges.add(e);
+    }
+
+    public String getMark() {
+        return mark;
     }
 }

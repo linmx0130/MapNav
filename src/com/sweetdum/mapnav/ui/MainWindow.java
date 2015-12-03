@@ -1,10 +1,16 @@
 package com.sweetdum.mapnav.ui;
 
+import com.sweetdum.mapnav.business.FindShortestPath;
 import com.sweetdum.mapnav.dao.MapData;
+import com.sweetdum.mapnav.entity.PositionNode;
+import com.sweetdum.mapnav.entity.ShortestPath;
 import com.sweetdum.mapnav.entity.TagPosition;
 
 import javax.swing.*;
+import javax.swing.text.Keymap;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
 /**
@@ -16,10 +22,29 @@ public class MainWindow extends JFrame{
     private JTextField endPointTextField;
     private MapView mapView;
     private MapData mapData;
+    private TagPosition startPoint=null,endPoint=null;
+
+    public void setStartPoint(TagPosition startPoint) {
+        this.startPoint = startPoint;
+        if (startPoint!=null) {
+            mapView.setSourcePoint(new Point(startPoint.getX(), startPoint.getY()));
+        }else {
+            mapView.setSourcePoint(null);
+        }
+    }
+
+    public void setEndPoint(TagPosition endPoint) {
+        this.endPoint = endPoint;
+        if (endPoint!=null) {
+            mapView.setTargetPoint(new Point(endPoint.getX(), endPoint.getY()));
+        }else{
+            mapView.setTargetPoint(null);
+        }
+    }
 
     public JPanel buildRightPanel(){
         JPanel rightPanel=new JPanel(new BorderLayout());
-        JPanel rightPanelTop=new JPanel(new GridLayout(2,1));
+        JPanel rightPanelTop=new JPanel(new GridLayout(4,1));
         {
             JLabel startPointTextFieldLabel=new JLabel("起点：");
             startPointTextField=new JTextField();
@@ -27,6 +52,14 @@ public class MainWindow extends JFrame{
             panel.add(startPointTextFieldLabel);
             panel.add(startPointTextField);
             startPointTextField.setColumns(10);
+            startPointTextField.addKeyListener(new KeyAdapter() {
+
+                @Override
+                public void keyTyped(KeyEvent e) {
+                    super.keyTyped(e);
+                    setStartPoint(null);
+                }
+            });
             rightPanelTop.add(panel);
         }
         {
@@ -36,7 +69,40 @@ public class MainWindow extends JFrame{
             JPanel panel=new JPanel(new FlowLayout());
             panel.add(endPointTextFieldLabel);
             panel.add(endPointTextField);
+            endPointTextField.addKeyListener(new KeyAdapter() {
+                @Override
+                public void keyPressed(KeyEvent e) {
+                    super.keyPressed(e);
+                    setEndPoint(null);
+                }
+            });
             rightPanelTop.add(panel);
+        }
+        {
+            JButton resetButton = new JButton("重置");
+            resetButton.addActionListener((event) -> {
+                startPointTextField.setText("");
+                endPointTextField.setText("");
+                mapView.setTargetPoint(null);
+                mapView.setSourcePoint(null);
+                startPointTextField.requestFocus();
+            });
+            rightPanelTop.add(resetButton);
+        }
+        {
+            JButton walkButton = new JButton("走路");
+            walkButton.addActionListener((event) -> {
+                if (startPoint==null || endPoint==null){
+                    return ;
+                }
+                ShortestPath path=FindShortestPath.getShortestPathByWalk(mapData.getGraph(),startPoint.getMark(),endPoint.getMark());
+                //TODO present the result
+                System.out.println(path.getLength());
+                for (PositionNode node:path.getNodes()){
+                    System.out.println(node.getMark());
+                }
+            });
+            rightPanelTop.add(walkButton);
         }
         rightPanel.add(rightPanelTop,BorderLayout.NORTH);
         return rightPanel;
@@ -56,7 +122,7 @@ public class MainWindow extends JFrame{
 
         mapData=new MapData();
         mapView.addMapClickedListener((int x, int y)->{
-            System.out.println("X="+x+", Y="+y);
+            //System.out.println("X="+x+", Y="+y);
 
             //get the text field own the focus
             JTextField focusOwner=null;
@@ -74,8 +140,14 @@ public class MainWindow extends JFrame{
                     chosen=tg;
                 }
             }
-
             focusOwner.setText(chosen.getName());
+            if (focusOwner==startPointTextField){
+                setStartPoint(chosen);
+                endPointTextField.requestFocus();
+            }
+            if (focusOwner==endPointTextField){
+                setEndPoint(chosen);
+            }
         });
     }
 
