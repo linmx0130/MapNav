@@ -26,4 +26,5 @@ public class PositionNode {
     public String getMark() {
         return mark;
     }
+
 }

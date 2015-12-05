@@ -158,4 +158,137 @@ public class FindShortestPath {
         }
         return ret;
     }
+    public static HashMap<String,Double> getShortestPathToOnePlaceByWalk(RoadGraph graphAtFirst, String sourceMark) {
+        RoadGraph graph=graphAtFirst.reverse();
+        PositionNode source = graph.getNode(sourceMark);
+        HashMap<PositionNode, Double> dis = new HashMap<>();
+        Queue<PositionNode> queue = new LinkedBlockingQueue<>();
+        HashSet<PositionNode> inQueue = new HashSet<>();
+        queue.add(source);
+        inQueue.add(source);
+        HashMap<PositionNode, RoadEdge> previousEdge = new HashMap<>();
+        previousEdge.put(source, null);
+        dis.put(source,0.0);
+
+        while (!queue.isEmpty()) {
+            PositionNode now = queue.remove();
+            inQueue.remove(now);
+            double nowDis = dis.get(now);
+            for (RoadEdge e : now.getEdges()) {
+                if (!e.allowWalk()) continue;
+                PositionNode next = e.getTarget();
+                if (!dis.containsKey(next)) {
+                    dis.put(next, 2147483647.0);
+                }
+                if (dis.get(next) > nowDis + e.getDistance()) {
+                    dis.put(next, nowDis + e.getDistance());
+                    previousEdge.put(next, e);
+                    if (!inQueue.contains(next)) {
+                        queue.add(next);
+                        inQueue.add(next);
+                    }
+                }
+            }
+        }
+
+        HashMap<String, Double> ret=new HashMap<>();
+        for (PositionNode node:dis.keySet()){
+            ret.put(node.getMark(),dis.get(node));
+        }
+        return ret;
+    }
+    public static HashMap<String,Double> getShortestPathToOnePlaceByCar(RoadGraph graphAtFirst, String sourceMark) {
+        RoadGraph graph=graphAtFirst.reverse();
+        PositionNode source = graph.getNode(sourceMark);
+        HashMap<PositionNode, Double> dis = new HashMap<>();
+        Queue<PositionNode> queue = new LinkedBlockingQueue<>();
+        HashSet<PositionNode> inQueue = new HashSet<>();
+        queue.add(source);
+        inQueue.add(source);
+        HashMap<PositionNode, RoadEdge> previousEdge = new HashMap<>();
+        previousEdge.put(source, null);
+        dis.put(source,0.0);
+
+        while (!queue.isEmpty()) {
+            PositionNode now = queue.remove();
+            inQueue.remove(now);
+            double nowDis = dis.get(now);
+            for (RoadEdge e : now.getEdges()) {
+                if (!e.allowCar()) continue;
+                PositionNode next = e.getTarget();
+                if (!dis.containsKey(next)) {
+                    dis.put(next, 2147483647.0);
+                }
+                if (dis.get(next) > nowDis + e.getDistance()) {
+                    dis.put(next, nowDis + e.getDistance());
+                    previousEdge.put(next, e);
+                    if (!inQueue.contains(next)) {
+                        queue.add(next);
+                        inQueue.add(next);
+                    }
+                }
+            }
+        }
+
+        HashMap<String, Double> ret=new HashMap<>();
+        for (PositionNode node:dis.keySet()){
+            ret.put(node.getMark(),dis.get(node));
+        }
+        return ret;
+    }
+    public static HashMap<String,Double> getShortestPathToOnePlaceByBus(RoadGraph graphAtFirst, String sourceMark) {
+        RoadGraph graph=graphAtFirst.reverse();
+        PositionNode source = graph.getNode(sourceMark);
+        HashMap<PositionNode, Double> dis = new HashMap<>();
+        Queue<PositionNode> queue = new LinkedBlockingQueue<>();
+        HashSet<PositionNode> inQueue = new HashSet<>();
+        queue.add(source);
+        inQueue.add(source);
+        HashMap<PositionNode, RoadEdge> previousEdge = new HashMap<>();
+        previousEdge.put(source, null);
+        dis.put(source,0.0);
+
+        while (!queue.isEmpty()) {
+            PositionNode now = queue.remove();
+            inQueue.remove(now);
+            double nowDis = dis.get(now);
+            for (RoadEdge e : now.getEdges()) {
+                if (e.allowWalk()) {
+                    PositionNode next = e.getTarget();
+                    if (!dis.containsKey(next)) {
+                        dis.put(next, 2147483647.0);
+                    }
+                    double nowEdgeDis=e.getDistance()/0.07;
+                    if (dis.get(next) > nowDis + nowEdgeDis) {
+                        dis.put(next, nowDis + nowEdgeDis);
+                        previousEdge.put(next, e);
+                        if (!inQueue.contains(next)) {
+                            queue.add(next);
+                            inQueue.add(next);
+                        }
+                    }
+                }
+                if (e.allowBus()){
+                    PositionNode next = e.getTarget();
+                    if (!dis.containsKey(next)) {
+                        dis.put(next, 2147483647.0);
+                    }
+                    if (dis.get(next) > nowDis + e.getDistance()) {
+                        dis.put(next, nowDis + e.getDistance());
+                        previousEdge.put(next, e);
+                        if (!inQueue.contains(next)) {
+                            queue.add(next);
+                            inQueue.add(next);
+                        }
+                    }
+                }
+            }
+        }
+
+        HashMap<String, Double> ret=new HashMap<>();
+        for (PositionNode node:dis.keySet()){
+            ret.put(node.getMark(),dis.get(node));
+        }
+        return ret;
+    }
 }

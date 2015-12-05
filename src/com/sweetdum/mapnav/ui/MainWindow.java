@@ -6,10 +6,13 @@ import com.sweetdum.mapnav.entity.ShortestPath;
 import com.sweetdum.mapnav.entity.TagPosition;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * 主界面
@@ -173,6 +176,28 @@ public class MainWindow extends JFrame{
         rightPanel.add(rightPanelTop,BorderLayout.NORTH);
         return rightPanel;
     }
+    private void outputLengthToFile(HashMap<String,Double> result){
+        JFileChooser chooser=new JFileChooser();
+        chooser.setFileFilter(new FileNameExtensionFilter("文本文件(*.txt)","txt"));
+        if (chooser.showSaveDialog(MainWindow.this)==JFileChooser.APPROVE_OPTION){
+            File f=chooser.getSelectedFile();
+            if (!f.getName().endsWith(".txt")){
+                f=new File(f.getAbsolutePath()+".txt");
+            }
+            try {
+                PrintWriter pw=new PrintWriter(new OutputStreamWriter(new FileOutputStream(f),"utf-8"));
+                for (String mark:result.keySet()){
+                    pw.println(mark+" "+String.format("%.2f",result.get(mark)));
+                }
+                pw.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+                JOptionPane.showConfirmDialog(MainWindow.this,"读写发生错误！","MapNav",
+                        JOptionPane.CLOSED_OPTION,JOptionPane.ERROR_MESSAGE);
+                return ;
+            }
+        }
+    }
     private void createMenuBar(){
         menuBar=new JMenuBar();
         JMenu toolsMenu=new JMenu("工具");
@@ -181,14 +206,53 @@ public class MainWindow extends JFrame{
             JMenuItem about = new JMenuItem("关于");
             about.addActionListener((evt) -> {
                 JOptionPane.showConfirmDialog(MainWindow.this,
-                        "MapNav\nCopyright(c), 2015 Mengxiao Lin\n All rights reserved.\n"+
-                        "Released under the BSD 3-Clause License.",
+                        "MapNav: Naive Map Navigator\n"+
+                        "Copyright(c), 2015 Mengxiao Lin, all rights reserved.\n"+
+                        "Released under the BSD 3-Clause License.\n"+
+                        "Github: https://github.com/linmx0130/MapNav",
                         "关于",
                         JOptionPane.CLOSED_OPTION, JOptionPane.PLAIN_MESSAGE
                 );
             });
             helpMenu.add(about);
         }
+        JMenu toOnePlace=new JMenu("输出全图到终点最短路");
+        {
+            JMenuItem byWalk=new JMenuItem("走路");
+            byWalk.addActionListener((evt)->{
+                if (endPoint==null){
+                    JOptionPane.showConfirmDialog(MainWindow.this,"没有选定终点！","MapNav",
+                            JOptionPane.CLOSED_OPTION,JOptionPane.ERROR_MESSAGE);
+                    return ;
+                }
+                HashMap<String,Double> result=FindShortestPath.getShortestPathToOnePlaceByWalk(mapData.getGraph(),endPoint.getMark());
+                outputLengthToFile(result);
+            });
+            toOnePlace.add(byWalk);
+            JMenuItem byCar=new JMenuItem("开车");
+            byCar.addActionListener((evt)->{
+                if (endPoint==null){
+                    JOptionPane.showConfirmDialog(MainWindow.this,"没有选定终点！","MapNav",
+                            JOptionPane.CLOSED_OPTION,JOptionPane.ERROR_MESSAGE);
+                    return ;
+                }
+                HashMap<String,Double> result=FindShortestPath.getShortestPathToOnePlaceByCar(mapData.getGraph(),endPoint.getMark());
+                outputLengthToFile(result);
+            });
+            toOnePlace.add(byCar);
+            JMenuItem byBus=new JMenuItem("公交");
+            byBus.addActionListener((evt)->{
+                if (endPoint==null){
+                    JOptionPane.showConfirmDialog(MainWindow.this,"没有选定终点！","MapNav",
+                            JOptionPane.CLOSED_OPTION,JOptionPane.ERROR_MESSAGE);
+                    return ;
+                }
+                HashMap<String,Double> result=FindShortestPath.getShortestPathToOnePlaceByBus(mapData.getGraph(),endPoint.getMark());
+                outputLengthToFile(result);
+            });
+            toOnePlace.add(byBus);
+        }
+        toolsMenu.add(toOnePlace);
         menuBar.add(toolsMenu);
         menuBar.add(helpMenu);
         setJMenuBar(menuBar);

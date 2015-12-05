@@ -38,4 +38,9 @@ public class RoadEdge {
     public double getDistance() {
         return distance;
     }
+
+    public RoadEdge reverse(){
+        RoadEdge ret=new RoadEdge(target,source,distance,vehicleCode);
+        return ret;
+    }
 }
