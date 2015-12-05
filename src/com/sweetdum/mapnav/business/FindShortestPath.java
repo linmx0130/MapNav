@@ -33,7 +33,7 @@ public class FindShortestPath {
                 if (!e.allowWalk()) continue;
                 PositionNode next = e.getTarget();
                 if (!dis.containsKey(next)) {
-                    dis.put(next, 2147483647.0);
+                    dis.put(next, Double.MAX_VALUE);
                 }
                 if (dis.get(next) > nowDis + e.getDistance()) {
                     dis.put(next, nowDis + e.getDistance());
@@ -74,7 +74,7 @@ public class FindShortestPath {
                 if (!e.allowCar()) continue;
                 PositionNode next = e.getTarget();
                 if (!dis.containsKey(next)) {
-                    dis.put(next, 2147483647.0);
+                    dis.put(next, Double.MAX_VALUE);
                 }
                 if (dis.get(next) > nowDis + e.getDistance()) {
                     dis.put(next, nowDis + e.getDistance());
@@ -118,7 +118,7 @@ public class FindShortestPath {
                 if (e.allowWalk()) {
                     PositionNode next = e.getTarget();
                     if (!dis.containsKey(next)) {
-                        dis.put(next, 2147483647.0);
+                        dis.put(next, Double.MAX_VALUE);
                     }
                     double nowEdgeDis=e.getDistance()/0.07;
                     if (dis.get(next) > nowDis + nowEdgeDis) {
@@ -133,7 +133,7 @@ public class FindShortestPath {
                 if (e.allowBus()){
                     PositionNode next = e.getTarget();
                     if (!dis.containsKey(next)) {
-                        dis.put(next, 2147483647.0);
+                        dis.put(next, Double.MAX_VALUE);
                     }
                     if (dis.get(next) > nowDis + e.getDistance()) {
                         dis.put(next, nowDis + e.getDistance());
@@ -178,7 +178,7 @@ public class FindShortestPath {
                 if (!e.allowWalk()) continue;
                 PositionNode next = e.getTarget();
                 if (!dis.containsKey(next)) {
-                    dis.put(next, 2147483647.0);
+                    dis.put(next, Double.MAX_VALUE);
                 }
                 if (dis.get(next) > nowDis + e.getDistance()) {
                     dis.put(next, nowDis + e.getDistance());
@@ -217,7 +217,7 @@ public class FindShortestPath {
                 if (!e.allowCar()) continue;
                 PositionNode next = e.getTarget();
                 if (!dis.containsKey(next)) {
-                    dis.put(next, 2147483647.0);
+                    dis.put(next, Double.MAX_VALUE);
                 }
                 if (dis.get(next) > nowDis + e.getDistance()) {
                     dis.put(next, nowDis + e.getDistance());
@@ -256,7 +256,7 @@ public class FindShortestPath {
                 if (e.allowWalk()) {
                     PositionNode next = e.getTarget();
                     if (!dis.containsKey(next)) {
-                        dis.put(next, 2147483647.0);
+                        dis.put(next, Double.MAX_VALUE);
                     }
                     double nowEdgeDis=e.getDistance()/0.07;
                     if (dis.get(next) > nowDis + nowEdgeDis) {
@@ -271,7 +271,7 @@ public class FindShortestPath {
                 if (e.allowBus()){
                     PositionNode next = e.getTarget();
                     if (!dis.containsKey(next)) {
-                        dis.put(next, 2147483647.0);
+                        dis.put(next, Double.MAX_VALUE);
                     }
                     if (dis.get(next) > nowDis + e.getDistance()) {
                         dis.put(next, nowDis + e.getDistance());
@@ -289,6 +289,91 @@ public class FindShortestPath {
         for (PositionNode node:dis.keySet()){
             ret.put(node.getMark(),dis.get(node));
         }
+        return ret;
+    }
+    private interface EdgeFilter{
+        boolean test(RoadEdge e);
+    }
+    private static double[][] buildAdjacentMatrixByFilter(RoadGraph graph,  HashMap<String, Integer> markIdMap,EdgeFilter filter){
+        ArrayList<String> nodesName=graph.getNodesMark();
+        for (int i=0;i<nodesName.size();++i){
+            markIdMap.put(nodesName.get(i),i);
+        }
+        double[][] ret=new double[nodesName.size()][nodesName.size()];
+        for (int i=0;i<ret.length;++i){
+            for (int j=0;j<ret[i].length;++j){
+                ret[i][j]=Double.MAX_VALUE;
+            }
+            ret[i][i]=0;
+        }
+        for (int i=0;i<nodesName.size();++i){
+            String mark=nodesName.get(i);
+            PositionNode n=graph.getNode(mark);
+            for (RoadEdge e:n.getEdges()){
+                if (!filter.test(e)) continue;
+                int tId=markIdMap.get(e.getTarget().getMark());
+                ret[i][tId]=Math.min(ret[i][tId],e.getDistance());
+            }
+        }
+        return ret;
+    }
+    public static double[][] buildAdjacentMatrixByWalk(RoadGraph graph,  HashMap<String, Integer> markIdMap){
+        return buildAdjacentMatrixByFilter(graph,markIdMap,(e)-> e.allowWalk());
+    }
+    public static double[][] buildAdjacentMatrixByCar(RoadGraph graph,  HashMap<String, Integer> markIdMap){
+        return buildAdjacentMatrixByFilter(graph,markIdMap,(e)-> e.allowCar());
+    }
+    public static double[][] buildAdjacentMatrixByBus(RoadGraph graph,  HashMap<String, Integer> markIdMap){
+        ArrayList<String> nodesName=graph.getNodesMark();
+        for (int i=0;i<nodesName.size();++i){
+            markIdMap.put(nodesName.get(i),i);
+        }
+        double[][] ret=new double[nodesName.size()][nodesName.size()];
+        for (int i=0;i<ret.length;++i){
+            for (int j=0;j<ret[i].length;++j){
+                ret[i][j]=Double.MAX_VALUE;
+            }
+            ret[i][i]=0;
+        }
+        for (int i=0;i<nodesName.size();++i){
+            String mark=nodesName.get(i);
+            PositionNode n=graph.getNode(mark);
+            for (RoadEdge e:n.getEdges()){
+                if (e.allowBus()) {
+                    int tId = markIdMap.get(e.getTarget().getMark());
+                    ret[i][tId] = Math.min(ret[i][tId],e.getDistance());
+                }
+                if (e.allowWalk()){
+                    int tId = markIdMap.get(e.getTarget().getMark());
+                    ret[i][tId] = Math.min(ret[i][tId],e.getDistance()/0.07);
+                }
+            }
+        }
+        return ret;
+    }
+    private static void floydAlgorithm(double[][] ret){
+        int n=ret.length;
+        for (int k=0;k<n;++k){
+            for (int i=0;i<n;++i){
+                for (int j=0;j<n;++j){
+                    ret[i][j]=Math.min(ret[i][j],ret[i][k]+ret[k][j]);
+                }
+            }
+        }
+    }
+    public static double[][] allShortestPathByWalk(RoadGraph graph, HashMap<String, Integer> markIdMap){
+        double[][] ret=buildAdjacentMatrixByWalk(graph,markIdMap);
+        floydAlgorithm(ret);
+        return ret;
+    }
+    public static double[][] allShortestPathByCar(RoadGraph graph, HashMap<String, Integer> markIdMap){
+        double[][] ret=buildAdjacentMatrixByCar(graph,markIdMap);
+        floydAlgorithm(ret);
+        return ret;
+    }
+    public static double[][] allShortestPathByBus(RoadGraph graph, HashMap<String, Integer> markIdMap){
+        double[][] ret=buildAdjacentMatrixByBus(graph,markIdMap);
+        floydAlgorithm(ret);
         return ret;
     }
 }

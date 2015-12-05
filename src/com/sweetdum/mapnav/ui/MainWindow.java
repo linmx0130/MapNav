@@ -10,6 +10,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.geom.Arc2D;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -198,6 +199,39 @@ public class MainWindow extends JFrame{
             }
         }
     }
+    private void outputAllLengthToFile(double[][] dis, HashMap<String,Integer> markIdMap){
+        JFileChooser chooser=new JFileChooser();
+        chooser.setFileFilter(new FileNameExtensionFilter("文本文件(*.txt)","txt"));
+        if (chooser.showSaveDialog(MainWindow.this)==JFileChooser.APPROVE_OPTION){
+            File f=chooser.getSelectedFile();
+            if (!f.getName().endsWith(".txt")){
+                f=new File(f.getAbsolutePath()+".txt");
+            }
+            try {
+                PrintWriter pw=new PrintWriter(new OutputStreamWriter(new FileOutputStream(f),"utf-8"));
+                int n=dis.length;
+                String[] nodesName=new String[markIdMap.size()];
+                for (String name:markIdMap.keySet()){
+                    nodesName[markIdMap.get(name)]=name;
+                }
+                for (int i=0;i<n;++i){
+                    for (int j=0;j<n;++j){
+                        if (dis[i][j]== Double.MAX_VALUE){
+                            pw.printf("%s -> %s : No way\n",nodesName[i],nodesName[j],dis[i][j]);
+                            continue;
+                        }
+                        pw.printf("%s -> %s : %.2f\n",nodesName[i],nodesName[j],dis[i][j]);
+                    }
+                }
+                pw.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+                JOptionPane.showConfirmDialog(MainWindow.this,"读写发生错误！","MapNav",
+                        JOptionPane.CLOSED_OPTION,JOptionPane.ERROR_MESSAGE);
+                return ;
+            }
+        }
+    }
     private void createMenuBar(){
         menuBar=new JMenuBar();
         JMenu toolsMenu=new JMenu("工具");
@@ -252,7 +286,32 @@ public class MainWindow extends JFrame{
             });
             toOnePlace.add(byBus);
         }
+        JMenu toAllPlace=new JMenu("输出全图最短路");
+        {
+            JMenuItem byWalk=new JMenuItem("走路");
+            byWalk.addActionListener((evt)->{
+                HashMap<String, Integer> markIdMap=new HashMap<>();
+                double[][] result=FindShortestPath.allShortestPathByWalk(mapData.getGraph(),markIdMap);
+                outputAllLengthToFile(result,markIdMap);
+            });
+            toAllPlace.add(byWalk);
+            JMenuItem byCar=new JMenuItem("开车");
+            byCar.addActionListener((evt)->{
+                HashMap<String, Integer> markIdMap=new HashMap<>();
+                double[][] result=FindShortestPath.allShortestPathByCar(mapData.getGraph(),markIdMap);
+                outputAllLengthToFile(result,markIdMap);
+            });
+            toAllPlace.add(byCar);
+            JMenuItem byBus=new JMenuItem("公交");
+            byBus.addActionListener((evt)->{
+                HashMap<String, Integer> markIdMap=new HashMap<>();
+                double[][] result=FindShortestPath.allShortestPathByBus(mapData.getGraph(),markIdMap);
+                outputAllLengthToFile(result,markIdMap);
+            });
+            toAllPlace.add(byBus);
+        }
         toolsMenu.add(toOnePlace);
+        toolsMenu.add(toAllPlace);
         menuBar.add(toolsMenu);
         menuBar.add(helpMenu);
         setJMenuBar(menuBar);

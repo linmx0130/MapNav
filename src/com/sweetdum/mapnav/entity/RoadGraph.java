@@ -17,7 +17,11 @@ public class RoadGraph {
         PositionNode node=new PositionNode(mark);
         nodes.put(mark,node);
     }
-
+    public ArrayList<String> getNodesMark(){
+        ArrayList<String> ret=new ArrayList<>();
+        for (String s:nodes.keySet()) ret.add(s);
+        return ret;
+    }
     public PositionNode getNode(String mark){
         return nodes.get(mark);
     }
