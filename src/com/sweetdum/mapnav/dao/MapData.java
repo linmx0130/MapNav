@@ -7,19 +7,24 @@ import com.sweetdum.mapnav.entity.TagPosition;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Scanner;
 
 /**
+ * 地图数据管理的封装类
  * Created by Mengxiao Lin on 2015/12/2.
  */
 public class MapData {
     private ArrayList<TagPosition> tagPositions;
+    private HashMap<String,TagPosition> markToTagPosition;
     private RoadGraph graph;
     private void readTagPositionsData(){
-        File f=new File("res/tag.txt");
+        //File f=new File("res/tag.txt");
+        InputStream tagFileSource=getClass().getResourceAsStream("/tag.txt");
         tagPositions=new ArrayList<>();
+        markToTagPosition=new HashMap<>();
         try {
-            BufferedReader fin = new BufferedReader(new InputStreamReader(new FileInputStream(f), "utf-8"));
+            BufferedReader fin = new BufferedReader(new InputStreamReader(tagFileSource, "utf-8"));
             String buf=null;
             do{
                 buf=fin.readLine();
@@ -32,7 +37,9 @@ public class MapData {
                 if (buf==null) break;
                 Scanner scanner=new Scanner(buf);
                 int x=scanner.nextInt(),y=scanner.nextInt();
-                tagPositions.add(new TagPosition(mark,name,x,y));
+                TagPosition beAdded=new TagPosition(mark,name,x,y);
+                tagPositions.add(beAdded);
+                markToTagPosition.put(mark,beAdded);
                 graph.addNode(mark);
             }while (buf!=null);
             fin.close();
@@ -41,9 +48,9 @@ public class MapData {
         }
     }
     private void readRoadDistanceData(){
-        File f=new File("res/mapdis.txt");
+        InputStream mapDisFile=getClass().getResourceAsStream("/mapdis.txt");
         try {
-            BufferedReader fin = new BufferedReader(new InputStreamReader(new FileInputStream(f), "utf-8"));
+            BufferedReader fin = new BufferedReader(new InputStreamReader(mapDisFile, "utf-8"));
             String buf=null;
             do{
                 buf=fin.readLine();
@@ -71,7 +78,9 @@ public class MapData {
     public ArrayList<TagPosition> getTagPositions() {
         return tagPositions;
     }
-
+    public TagPosition getTagPositionByMark(String mark) {
+        return markToTagPosition.get(mark);
+    }
     public RoadGraph getGraph() {
         return graph;
     }

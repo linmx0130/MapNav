@@ -2,18 +2,17 @@ package com.sweetdum.mapnav.ui;
 
 import com.sweetdum.mapnav.business.FindShortestPath;
 import com.sweetdum.mapnav.dao.MapData;
-import com.sweetdum.mapnav.entity.PositionNode;
 import com.sweetdum.mapnav.entity.ShortestPath;
 import com.sweetdum.mapnav.entity.TagPosition;
 
 import javax.swing.*;
-import javax.swing.text.Keymap;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
 /**
+ * 主界面
  * Created by Mengxiao Lin on 2015/12/1.
  */
 public class MainWindow extends JFrame{
@@ -23,6 +22,8 @@ public class MainWindow extends JFrame{
     private MapView mapView;
     private MapData mapData;
     private TagPosition startPoint=null,endPoint=null;
+    private JTextArea tipsLabel;
+    private JMenuBar menuBar;
 
     public void setStartPoint(TagPosition startPoint) {
         this.startPoint = startPoint;
@@ -42,9 +43,9 @@ public class MainWindow extends JFrame{
         }
     }
 
-    public JPanel buildRightPanel(){
+    private JPanel buildRightPanel(){
         JPanel rightPanel=new JPanel(new BorderLayout());
-        JPanel rightPanelTop=new JPanel(new GridLayout(4,1));
+        JPanel rightPanelTop=new JPanel(new GridLayout(6,1));
         {
             JLabel startPointTextFieldLabel=new JLabel("起点：");
             startPointTextField=new JTextField();
@@ -85,6 +86,8 @@ public class MainWindow extends JFrame{
                 endPointTextField.setText("");
                 mapView.setTargetPoint(null);
                 mapView.setSourcePoint(null);
+                mapView.setShowPath(null,null);
+                tipsLabel.setText("");
                 startPointTextField.requestFocus();
             });
             rightPanelTop.add(resetButton);
@@ -92,24 +95,106 @@ public class MainWindow extends JFrame{
         {
             JButton walkButton = new JButton("走路");
             walkButton.addActionListener((event) -> {
-                if (startPoint==null || endPoint==null){
+                if (startPoint==null){
+                    tipsLabel.setText("未设置起点！");
+                    startPointTextField.requestFocus();
+                    return ;
+                }
+                if (endPoint==null){
+                    tipsLabel.setText("未设置终点！");
+                    endPointTextField.requestFocus();
                     return ;
                 }
                 ShortestPath path=FindShortestPath.getShortestPathByWalk(mapData.getGraph(),startPoint.getMark(),endPoint.getMark());
-                //TODO present the result
-                System.out.println(path.getLength());
-                for (PositionNode node:path.getNodes()){
-                    System.out.println(node.getMark());
+                if (path.getEdges().size()==0){
+                    tipsLabel.setText("无法走路到达目的地");
+                    return ;
                 }
+                tipsLabel.setText("最短路径为图中绿色线所示，距离为"+String.format("%.2f",path.getLength())+"km。");
+                mapView.setShowPath(path,mapData);
             });
             rightPanelTop.add(walkButton);
+        }
+        {
+            JButton carButton = new JButton("开车");
+            carButton.addActionListener((event) -> {
+                if (startPoint==null){
+                    tipsLabel.setText("未设置起点！");
+                    startPointTextField.requestFocus();
+                    return ;
+                }
+                if (endPoint==null){
+                    tipsLabel.setText("未设置终点！");
+                    endPointTextField.requestFocus();
+                    return ;
+                }
+                ShortestPath path=FindShortestPath.getShortestPathByCar(mapData.getGraph(),startPoint.getMark(),endPoint.getMark());
+                if (path.getEdges().size()==0){
+                    tipsLabel.setText("无法通过开车到达目的地");
+                    return;
+                }
+                tipsLabel.setText("最短路径为图中绿色线所示，距离为"+String.format("%.2f",path.getLength())+"km。");
+                mapView.setShowPath(path,mapData);
+            });
+            rightPanelTop.add(carButton);
+        }
+        {
+            JButton busButton = new JButton("公交");
+            busButton.addActionListener((event) -> {
+                if (startPoint==null){
+                    tipsLabel.setText("未设置起点！");
+                    startPointTextField.requestFocus();
+                    return ;
+                }
+                if (endPoint==null){
+                    tipsLabel.setText("未设置终点！");
+                    endPointTextField.requestFocus();
+                    return ;
+                }
+                ShortestPath path=FindShortestPath.getShortestPathByBus(mapData.getGraph(),startPoint.getMark(),endPoint.getMark());
+                if (path.getEdges().size()==0){
+                    tipsLabel.setText("无法通过公交到达目的地");
+                    return;
+                }
+                tipsLabel.setText("最短路径为图中绿色和青色线所示，绿色为走路部分，青色为公交部分，用时为"+String.format("%.2f",path.getLength())+"min。");
+                mapView.setShowPath(path,mapData);
+            });
+            rightPanelTop.add(busButton);
+        }
+        {
+            tipsLabel=new JTextArea();
+            tipsLabel.setEditable(false);
+            tipsLabel.setBackground(this.getBackground());
+            tipsLabel.setColumns(13);
+            tipsLabel.setLineWrap(true);
+            rightPanel.add(tipsLabel,BorderLayout.CENTER);
+
         }
         rightPanel.add(rightPanelTop,BorderLayout.NORTH);
         return rightPanel;
     }
+    private void createMenuBar(){
+        menuBar=new JMenuBar();
+        JMenu toolsMenu=new JMenu("工具");
+        JMenu helpMenu=new JMenu("帮助");
+        {
+            JMenuItem about = new JMenuItem("关于");
+            about.addActionListener((evt) -> {
+                JOptionPane.showConfirmDialog(MainWindow.this,
+                        "MapNav\nCopyright(c), 2015 Mengxiao Lin\n All rights reserved.\n"+
+                        "Released under the BSD 3-Clause License.",
+                        "关于",
+                        JOptionPane.CLOSED_OPTION, JOptionPane.PLAIN_MESSAGE
+                );
+            });
+            helpMenu.add(about);
+        }
+        menuBar.add(toolsMenu);
+        menuBar.add(helpMenu);
+        setJMenuBar(menuBar);
+    }
     public MainWindow(){
         mainLayout=new BorderLayout(2,2);
-
         mapView=new MapView();
         setLayout(mainLayout);
         add(mapView,BorderLayout.CENTER);
@@ -122,8 +207,6 @@ public class MainWindow extends JFrame{
 
         mapData=new MapData();
         mapView.addMapClickedListener((int x, int y)->{
-            //System.out.println("X="+x+", Y="+y);
-
             //get the text field own the focus
             JTextField focusOwner=null;
             if (startPointTextField.isFocusOwner()) focusOwner=startPointTextField;
@@ -149,6 +232,7 @@ public class MainWindow extends JFrame{
                 setEndPoint(chosen);
             }
         });
+        createMenuBar();
     }
 
 

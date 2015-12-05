@@ -9,6 +9,7 @@ import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
+ * 包含所有用到的最短路算法的实现。
  * Created by Mengxiao Lin on 2015/12/3.
  */
 public class FindShortestPath {
@@ -20,8 +21,8 @@ public class FindShortestPath {
         HashSet<PositionNode> inQueue = new HashSet<>();
         queue.add(source);
         inQueue.add(source);
-        HashMap<PositionNode, PositionNode> previousNode = new HashMap<>();
-        previousNode.put(source, null);
+        HashMap<PositionNode, RoadEdge> previousEdge = new HashMap<>();
+        previousEdge.put(source, null);
         dis.put(source,0.0);
 
         while (!queue.isEmpty()) {
@@ -36,7 +37,7 @@ public class FindShortestPath {
                 }
                 if (dis.get(next) > nowDis + e.getDistance()) {
                     dis.put(next, nowDis + e.getDistance());
-                    previousNode.put(next, now);
+                    previousEdge.put(next, e);
                     if (!inQueue.contains(next)) {
                         queue.add(next);
                         inQueue.add(next);
@@ -47,9 +48,113 @@ public class FindShortestPath {
         ShortestPath ret = new ShortestPath();
         PositionNode ptr=target;
         ret.setLength(dis.get(target));
-        while (ptr!=null){
-            ret.addNode(ptr);
-            ptr=previousNode.get(ptr);
+        while (previousEdge.get(ptr)!=null){
+            ret.addEdge(previousEdge.get(ptr));
+            ptr=previousEdge.get(ptr).getSource();
+        }
+        return ret;
+    }
+    public static ShortestPath getShortestPathByCar(RoadGraph graph, String sourceMark, String targetMark) {
+        PositionNode source = graph.getNode(sourceMark);
+        PositionNode target = graph.getNode(targetMark);
+        HashMap<PositionNode, Double> dis = new HashMap<>();
+        Queue<PositionNode> queue = new LinkedBlockingQueue<>();
+        HashSet<PositionNode> inQueue = new HashSet<>();
+        queue.add(source);
+        inQueue.add(source);
+        HashMap<PositionNode, RoadEdge> previousEdge = new HashMap<>();
+        previousEdge.put(source, null);
+        dis.put(source,0.0);
+
+        while (!queue.isEmpty()) {
+            PositionNode now = queue.remove();
+            inQueue.remove(now);
+            double nowDis = dis.get(now);
+            for (RoadEdge e : now.getEdges()) {
+                if (!e.allowCar()) continue;
+                PositionNode next = e.getTarget();
+                if (!dis.containsKey(next)) {
+                    dis.put(next, 2147483647.0);
+                }
+                if (dis.get(next) > nowDis + e.getDistance()) {
+                    dis.put(next, nowDis + e.getDistance());
+                    previousEdge.put(next, e);
+                    if (!inQueue.contains(next)) {
+                        queue.add(next);
+                        inQueue.add(next);
+                    }
+                }
+            }
+        }
+        ShortestPath ret = new ShortestPath();
+        PositionNode ptr=target;
+        if (!dis.containsKey(target)){
+            return ret;
+        }
+        ret.setLength(dis.get(target));
+        while (previousEdge.get(ptr)!=null){
+            ret.addEdge(previousEdge.get(ptr));
+            ptr=previousEdge.get(ptr).getSource();
+        }
+        return ret;
+    }
+    public static ShortestPath getShortestPathByBus(RoadGraph graph, String sourceMark, String targetMark) {
+        PositionNode source = graph.getNode(sourceMark);
+        PositionNode target = graph.getNode(targetMark);
+        HashMap<PositionNode, Double> dis = new HashMap<>();
+        Queue<PositionNode> queue = new LinkedBlockingQueue<>();
+        HashSet<PositionNode> inQueue = new HashSet<>();
+        queue.add(source);
+        inQueue.add(source);
+        HashMap<PositionNode, RoadEdge> previousEdge = new HashMap<>();
+        previousEdge.put(source, null);
+        dis.put(source,0.0);
+
+        while (!queue.isEmpty()) {
+            PositionNode now = queue.remove();
+            inQueue.remove(now);
+            double nowDis = dis.get(now);
+            for (RoadEdge e : now.getEdges()) {
+                if (e.allowWalk()) {
+                    PositionNode next = e.getTarget();
+                    if (!dis.containsKey(next)) {
+                        dis.put(next, 2147483647.0);
+                    }
+                    double nowEdgeDis=e.getDistance()/0.07;
+                    if (dis.get(next) > nowDis + nowEdgeDis) {
+                        dis.put(next, nowDis + nowEdgeDis);
+                        previousEdge.put(next, e);
+                        if (!inQueue.contains(next)) {
+                            queue.add(next);
+                            inQueue.add(next);
+                        }
+                    }
+                }
+                if (e.allowBus()){
+                    PositionNode next = e.getTarget();
+                    if (!dis.containsKey(next)) {
+                        dis.put(next, 2147483647.0);
+                    }
+                    if (dis.get(next) > nowDis + e.getDistance()) {
+                        dis.put(next, nowDis + e.getDistance());
+                        previousEdge.put(next, e);
+                        if (!inQueue.contains(next)) {
+                            queue.add(next);
+                            inQueue.add(next);
+                        }
+                    }
+                }
+            }
+        }
+        ShortestPath ret = new ShortestPath();
+        PositionNode ptr=target;
+        if (!dis.containsKey(target)){
+            return ret;
+        }
+        ret.setLength(dis.get(target));
+        while (previousEdge.get(ptr)!=null){
+            ret.addEdge(previousEdge.get(ptr));
+            ptr=previousEdge.get(ptr).getSource();
         }
         return ret;
     }

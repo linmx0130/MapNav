@@ -1,22 +1,23 @@
 package com.sweetdum.mapnav.ui;
 
-import javafx.scene.shape.StrokeLineCap;
-import javafx.scene.shape.StrokeType;
+import com.sweetdum.mapnav.dao.MapData;
+import com.sweetdum.mapnav.entity.RoadEdge;
+import com.sweetdum.mapnav.entity.ShortestPath;
+import com.sweetdum.mapnav.entity.TagPosition;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
 /**
+ * 地图展示类
  * Created by Mengxiao Lin on 2015/12/1.
  */
 public class MapView extends JComponent {
@@ -25,10 +26,10 @@ public class MapView extends JComponent {
     private double scale=1;
     private double centerX=0,centerY=0;
     private ArrayList<MapClickedListener> clickedListeners;
-
+    private ShortestPath showPath;
     private int centerPixelX,centerPixelY,halfWidth,halfHeight;
     private int startPixelX,startPixelY,endPixelX,endPixelY;
-
+    private MapData mapData;
     private Point sourcePoint,targetPoint;
     /**
      * rebuild all parameters to present the image
@@ -46,9 +47,9 @@ public class MapView extends JComponent {
     public MapView(){
         //read map image
         try {
-            mapImageFile= ImageIO.read(new File("res/map.png"));
-            sourceMark= ImageIO.read(new File("res/sourceMark.png"));
-            targetMark= ImageIO.read(new File("res/targetMark.png"));
+            mapImageFile= ImageIO.read(getClass().getResourceAsStream("/map.png"));
+            sourceMark= ImageIO.read(getClass().getResourceAsStream("/sourceMark.png"));
+            targetMark= ImageIO.read(getClass().getResourceAsStream("/targetMark.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -152,15 +153,27 @@ public class MapView extends JComponent {
     }
 
     public void setSourcePoint(Point sourcePoint) {
+        if (this.sourcePoint!=sourcePoint) {
+            showPath=null;
+        }
         this.sourcePoint = sourcePoint;
+
         repaint();
     }
 
     public void setTargetPoint(Point targetPoint) {
+        if (this.targetPoint!=targetPoint) {
+            showPath=null;
+        }
         this.targetPoint = targetPoint;
         repaint();
     }
-
+    private int mapXtoScreenX(double mapX){
+        return (int)((mapX-startPixelX)/mapImageFile.getWidth()*getWidth()/scale);
+    }
+    private int mapYtoScreenY(double mapY){
+        return (int)((mapY-startPixelY)/mapImageFile.getHeight()*getHeight()/scale);
+    }
     @Override
     protected void paintComponent(Graphics graphics) {
         super.paintComponent(graphics);
@@ -168,22 +181,48 @@ public class MapView extends JComponent {
         g.drawImage(mapImageFile,0,0,getWidth(),getHeight(),
                 startPixelX,startPixelY,endPixelX,endPixelY,null);
         if (sourcePoint!=null) {
-            double realSourcePointX=(sourcePoint.getX()-startPixelX)/mapImageFile.getWidth()*getWidth()/scale;
-            double realSourcePointY=(sourcePoint.getY()-startPixelY)/mapImageFile.getHeight()*getHeight()/scale;
+            int realSourcePointX=mapXtoScreenX(sourcePoint.x);
+            int realSourcePointY=mapYtoScreenY(sourcePoint.y);
 
             g.setColor(Color.GREEN);
             g.setBackground(Color.GREEN);
             g.drawImage(sourceMark,(int)(realSourcePointX-10),(int)(realSourcePointY-10),20,20,null);
         }
         if (targetPoint!=null) {
-            double realSourcePointX=(targetPoint.getX()-startPixelX)/mapImageFile.getWidth()*getWidth()/scale;
-            double realSourcePointY=(targetPoint.getY()-startPixelY)/mapImageFile.getHeight()*getHeight()/scale;
+            int realSourcePointX=mapXtoScreenX(targetPoint.getX());
+            int realSourcePointY=mapYtoScreenY(targetPoint.getY());
 
             g.setColor(Color.GREEN);
             g.setBackground(Color.GREEN);
-            g.drawImage(targetMark,(int)(realSourcePointX-10),(int)(realSourcePointY-10),20,20,null);
+            g.drawImage(targetMark,(realSourcePointX-10),(realSourcePointY-10),20,20,null);
         }
-        //g.setStroke(new BasicStroke(6));
+        if (sourcePoint==null || targetPoint==null) showPath=null;
+        if (showPath!=null) {
+            g.setColor(Color.GREEN);
+            g.setStroke(new BasicStroke(6));
+            ArrayList<RoadEdge> edges=showPath.getEdges();
+            for (RoadEdge e:edges){
+                TagPosition source=mapData.getTagPositionByMark(e.getSource().getMark());
+                TagPosition target=mapData.getTagPositionByMark(e.getTarget().getMark());
+                int sX=mapXtoScreenX(source.getX());
+                int sY=mapYtoScreenY(source.getY());
+                int eX=mapXtoScreenX(target.getX());
+                int eY=mapYtoScreenY(target.getY());
+                if (e.allowBus()){
+                    g.setColor(Color.CYAN);
+                }
+                g.drawLine(sX,sY,eX,eY);
+                if (e.allowBus()){
+                    g.setColor(Color.GREEN);
+                }
+            }
+        }
+    }
+
+    public void setShowPath(ShortestPath showPath,MapData mapData) {
+        this.showPath = showPath;
+        this.mapData=mapData;
+        repaint();
     }
 
     public double getScale() {
@@ -194,7 +233,7 @@ public class MapView extends JComponent {
         return centerX;
     }
 
-    public double getCenterY() {
+    public double getCenterY()  {
         return centerY;
     }
 
