@@ -99,6 +99,10 @@ public class MainWindow extends JFrame{
         {
             JButton walkButton = new JButton("走路");
             walkButton.addActionListener((event) -> {
+                if (startPoint==endPoint){
+                    tipsLabel.setText("起点和终点一样！");
+                    return ;
+                }
                 if (startPoint==null){
                     tipsLabel.setText("未设置起点！");
                     startPointTextField.requestFocus();
@@ -122,6 +126,10 @@ public class MainWindow extends JFrame{
         {
             JButton carButton = new JButton("开车");
             carButton.addActionListener((event) -> {
+                if (startPoint==endPoint){
+                    tipsLabel.setText("起点和终点一样！");
+                    return ;
+                }
                 if (startPoint==null){
                     tipsLabel.setText("未设置起点！");
                     startPointTextField.requestFocus();
@@ -145,6 +153,10 @@ public class MainWindow extends JFrame{
         {
             JButton busButton = new JButton("公交");
             busButton.addActionListener((event) -> {
+                if (startPoint==endPoint){
+                    tipsLabel.setText("起点和终点一样！");
+                    return ;
+                }
                 if (startPoint==null){
                     tipsLabel.setText("未设置起点！");
                     startPointTextField.requestFocus();

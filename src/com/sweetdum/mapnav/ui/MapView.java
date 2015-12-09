@@ -180,22 +180,6 @@ public class MapView extends JComponent {
         Graphics2D g=(Graphics2D)graphics;
         g.drawImage(mapImageFile,0,0,getWidth(),getHeight(),
                 startPixelX,startPixelY,endPixelX,endPixelY,null);
-        if (sourcePoint!=null) {
-            int realSourcePointX=mapXtoScreenX(sourcePoint.x);
-            int realSourcePointY=mapYtoScreenY(sourcePoint.y);
-
-            g.setColor(Color.GREEN);
-            g.setBackground(Color.GREEN);
-            g.drawImage(sourceMark,(int)(realSourcePointX-10),(int)(realSourcePointY-10),20,20,null);
-        }
-        if (targetPoint!=null) {
-            int realSourcePointX=mapXtoScreenX(targetPoint.getX());
-            int realSourcePointY=mapYtoScreenY(targetPoint.getY());
-
-            g.setColor(Color.GREEN);
-            g.setBackground(Color.GREEN);
-            g.drawImage(targetMark,(realSourcePointX-10),(realSourcePointY-10),20,20,null);
-        }
         if (sourcePoint==null || targetPoint==null) showPath=null;
         if (showPath!=null) {
             g.setColor(Color.GREEN);
@@ -216,6 +200,22 @@ public class MapView extends JComponent {
                     g.setColor(Color.GREEN);
                 }
             }
+        }
+        if (sourcePoint!=null) {
+            int realSourcePointX=mapXtoScreenX(sourcePoint.x);
+            int realSourcePointY=mapYtoScreenY(sourcePoint.y);
+
+            g.setColor(Color.GREEN);
+            g.setBackground(Color.GREEN);
+            g.drawImage(sourceMark,(int)(realSourcePointX-10),(int)(realSourcePointY-10),20,20,null);
+        }
+        if (targetPoint!=null) {
+            int realSourcePointX=mapXtoScreenX(targetPoint.getX());
+            int realSourcePointY=mapYtoScreenY(targetPoint.getY());
+
+            g.setColor(Color.GREEN);
+            g.setBackground(Color.GREEN);
+            g.drawImage(targetMark,(realSourcePointX-10),(realSourcePointY-10),20,20,null);
         }
     }
 
